@@ -8,6 +8,9 @@
 obtain_interface (){
 	INTERFACE="$(iw dev | awk '$1=="Interface" {print $2}')"
 
+	echo "Now obtaining wireless interface name."
+	sleep 1
+
 	if [ -z "$INTERFACE" ];
 	then
 		echo No wireless interface has been detected.
@@ -20,6 +23,7 @@ obtain_interface (){
 #changes wireless interface to monitor mode
 monitor_mode (){
 	echo Now switching wireless interface to monitor mode...
+	sleep 1
 	ifconfig $INTERFACE down
 	iwconfig $INTERFACE mode monitor
 	ifconfig $INTERFACE up
@@ -56,7 +60,7 @@ show_main_menu (){
 	echo "3. Wordlist"
 	echo "4. Deauthenticate"
 	echo "0. Exit"
-	printf "\n"
+	echo "-----------------"
 }
 
 #checks if user knows client and AP MAC Addresses
@@ -80,7 +84,13 @@ known_deauth () {
 	echo "AP:" $APMAC
 	echo "CLIENT:" $CLMAC
 
-	airodump-ng --bssid $APMAC $INTERFACE
+	gnome-terminal --command  "airodump-ng --bssid $APMAC -w temp $INTERFACE"
+	local PID=$!
+	sleep 2
+	kill $PID
+	#blink echo whats is occuring with airodump
+	local CHANNEL
+	CHANNEL = awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv
 }
 
 #read main menu choice
