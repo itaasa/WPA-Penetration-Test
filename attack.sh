@@ -81,16 +81,17 @@ known_deauth () {
 	read -p "Enter MAC Address of AP: " APMAC
 	read -p "Enter MAC Address of client (leave blank if unknown): " CLMAC
 
-	echo "AP:" $APMAC
-	echo "CLIENT:" $CLMAC
+	x-terminal-emulator -e "airodump-ng -w temp $INTERFACE" &
 
-	gnome-terminal --command  "airodump-ng --bssid $APMAC -w temp $INTERFACE"
-	local PID=$!
-	sleep 2
-	kill $PID
 	#blink echo whats is occuring with airodump
-	local CHANNEL
-	CHANNEL = awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv
+	sleep 30
+	local CH
+	CH= awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv
+	if [	-z $CH	]; then
+		echo Unable to capture beacon with BSSID: $APMAC
+		exit
+	fi
+	#now run airodump with CH
 }
 
 #read main menu choice
