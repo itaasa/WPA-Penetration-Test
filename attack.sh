@@ -58,40 +58,26 @@ show_main_menu (){
 	echo "1. Reaver"
 	echo "2. Crunch"
 	echo "3. Wordlist"
-	echo "4. Deauthenticate"
 	echo "0. Exit"
 	echo "-----------------"
 }
 
-#checks if user knows client and AP MAC Addresses
-menu_deauth (){
-	local KNOWN
-	read -p "Is MAC Address of AP known? [Y/N] " KNOWN
+crunch_attack () {
+	local APMAC CH TEMPPID
 
-	case $KNOWN in
-		Y|y) known_deauth ;;
-		N|n) echo unknown ;;
-                *) echo "Entered invalid option..." && sleep 2 && deauth
-	esac
-}
+	clear
+	echo Now starting crunch attack...
+	sleep 2
 
-#allows user to quickly deauth client or ap when mac addresses are known
-known_deauth () {
-	local APMAC CLMAC
 	read -p "Enter MAC Address of AP: " APMAC
-	read -p "Enter MAC Address of client (leave blank if unknown): " CLMAC
 
 	x-terminal-emulator -e "airodump-ng -w temp $INTERFACE" &
+	
+	#kill the proccess above after the sleep
+	sleep 5
 
-	#blink echo whats is occuring with airodump
-	sleep 30
-	local CH
-	CH= awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv
-	if [	-z $CH	]; then
-		echo Unable to capture beacon with BSSID: $APMAC
-		exit
-	fi
-	#now run airodump with CH
+	CH=$(awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv)
+        echo $CH
 }
 
 #read main menu choice
@@ -100,9 +86,8 @@ read_main_menu () {
 	read -p "Enter choice [0-4]: " CHOICE
 	case $CHOICE in
 		1) echo reaver ;;
-		2) echo crunch ;;
+		2) crunch_attack ;;
 		3) echo wordlist ;;
-		4) menu_deauth ;;
 		0) echo "Now exiting..." && sleep 1 && exit 0 ;;
 		*) echo "Entered invalid option..." && sleep 2 && read_main_menu
 	esac
