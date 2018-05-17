@@ -1,9 +1,8 @@
 #!/bin/bash
 
-APMAC=$1
 PSKFILE=$2
 
-# Killing any other aircrack process that may have not terminated
+# Kills any leftover aircrack processes that may not have terminated
 CRACKPID=`ps -ef | grep "\baircrack\b" | awk '{print $2}'`
 echo aircrack-ng processes found: $CRACKPID
 sleep 1
@@ -43,7 +42,7 @@ echo Now using wordlist: $WORDLIST...
 sleep 1
 cd ..
 
-x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST -b $APMAC crackfiles/"$PSKFILE"*.cap ; bash" &
+x-terminal-emulator -e "aircrack-ng -w wordlists/$WORDLIST crackfiles/"$PSKFILE"*.cap ; bash" &
 echo 
 
 #Prompts user to exit aircrack by pressing enter
