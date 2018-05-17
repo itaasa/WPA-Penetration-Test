@@ -1,5 +1,5 @@
-    [*]	WIFI ATTACK BASH SCRIPT		[*]
+    [*]	WI-FI PENETRATION TEST		[*]
     [*]	USE ONLY FOR TESTING PURPOSES	[*]
     [*]	NOT TO BE USED ILLEGALLY	[*]
-    [*]	BY: Arvin Itaas			[*]
+    [*]	BY: ARVIN ITAAS			[*]
 

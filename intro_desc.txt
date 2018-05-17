@@ -1,9 +1,19 @@
-The following script makes use of aircrack tools
-to be able to:
+The following bash script will be used to:
 
-Obtain passwords by cracking WEP and 
-WPA PSK (1 and 2) through the following methods:
--reaver
--crunch
--public wordlists
+Obtain passwords by cracking WPA/WPA2 through 
+the following tools...
 
+airodump-ng
+aircrack-ng
+aireplay-ng
+
+Attempted cracks on keys will be done using 
+dictionary attacks. Please place any
+wordlists/password dictionaries in the
+in the /wordlist folder! 
+
+Disclaimer: The bash script must only be used for
+testing home/personal networks that you own. Do
+not test on networks you do not own!
+I am not reponsible for any action performed by
+the user.
