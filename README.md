@@ -15,3 +15,5 @@ testing home/personal networks that you own. Do
 not test on networks you do not own!
 I am not reponsible for any action performed by
 the user.
+
+This project was used to learn the terminal along with bash scripting.
